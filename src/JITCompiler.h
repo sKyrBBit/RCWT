@@ -8,8 +8,10 @@ public:
     JITCompiler(char** names) {
         this->names = names;
     }
-    void compile(string const& ,instruction*, uint32_t);
+    void compile(string const& ,instruction*, uint32_t, uint32_t);
     char** names;
+private:
+    char* general_registers[];
 };
 
 
