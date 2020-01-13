@@ -10,7 +10,7 @@ uint32_t VirtualMachine::pop() {
 	stack_pointer--;
 	return tmp;
 }
-vector<instruction> VirtualMachine::execute(class_* entry) {
+void VirtualMachine::execute(class_* entry) {
 // direct threading
 #define INIT_DISPATCH JUMP;
 #define CASE(op) L_ ## op:
@@ -27,7 +27,7 @@ vector<instruction> VirtualMachine::execute(class_* entry) {
 
         /* 10 */ &&L_COPY,  /* 11 */ &&L_SWAP,  /* 12 */ &&L_CALL,   /* 13 */ &&L_RET,
         /* 14 */ &&L_PUSH,  /* 15 */ &&L_POP,   /* 16 */ &&L_SET,    /* 17 */ &&L_GET,
-        /* 18 */ &&L_STORE, /* 19 */ &&L_LOAD,  /* 1a */ &&L_GOTO,   /* 1b */ &&L_NOP,
+        /* 18 */ &&L_STORE, /* 19 */ &&L_LOAD,  /* 1a */ &&L_GOTO,   /* 1b */ &&L_NEW,
         /* 1c */ &&L_NOP,   /* 1d */ &&L_NOP,   /* 1e */ &&L_NOP,    /* 1f */ &&L_NOP,
 
         /* 20 */ &&L_ADD,   /* 21 */ &&L_SUB,   /* 22 */ &&L_MUL,    /* 23 */ &&L_DIV,
@@ -65,6 +65,8 @@ vector<instruction> VirtualMachine::execute(class_* entry) {
             push((uint32_t) pc);
             push((uint32_t) &registers[i.operand0]);
             pc = (instruction*) &functions[i.operand1];
+
+            compiler->compile("test", functions[i.operand1]->body, 1, i.operand2); // TODO
         } JUMP;
         CASE(RET) {
             *(uint32_t*) pop() = i.operand0;
@@ -89,6 +91,12 @@ vector<instruction> VirtualMachine::execute(class_* entry) {
         } NEXT;
         CASE(LOAD) {
             registers[i.operand1] = base_pointer[i.operand0];
+        } NEXT;
+        CASE(NEW) {
+            auto tmp = free_pointer;
+            while (free_pointer + i.operand1 > limit_pointer) garbage_collect();
+            free_pointer += i.operand1;
+            registers[i.operand0] = (uint32_t) tmp;
         } NEXT;
 
 		CASE(ADD) {
@@ -131,4 +139,7 @@ vector<instruction> VirtualMachine::execute(class_* entry) {
             registers[i.operand0] = i.operand1;
         } NEXT;
     } END_DISPATCH;
+}
+void VirtualMachine::garbage_collect() {
+    // TODO
 }

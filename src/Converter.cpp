@@ -93,11 +93,6 @@ class_* Converter::WCtoMemory(string const& file_name) {
     tmp->entry_point = *read_int();
     DEBUG_OUT_HEX("entry point : ", tmp->entry_point);
 
-    for (uint32_t u = 0; u < value_placeholder.size(); u++)
-        cout << "debug | value_placeholder[" << u <<  "]: " << hex << value_placeholder[u] << endl;
-    for (uint32_t u = 0; u < pointer_placeholder.size(); u++)
-        cout << "debug | pointer_placeholder[" << u <<  "]: " << hex << *(uint32_t*) pointer_placeholder[u] << endl;
-
     return tmp;
 }
 uint8_t* Converter::read(uint32_t size) {
@@ -113,6 +108,7 @@ uint32_t* Converter::read_int() {
 function* Converter::read_function() {
     uint32_t size = *read_int();
     DEBUG_OUT_HEX("function size : ", size);
+    value_placeholder.push_back(size); // TODO back() can be available only if the vector isn't empty.
     uint32_t* tmp = &value_placeholder.back();
     for (uint32_t i = 0; i < size; i++) {
         value_placeholder.push_back(*read_int());
@@ -121,6 +117,7 @@ function* Converter::read_function() {
 }
 function* Converter::read_methods(uint32_t method_count) {
     if (method_count == 0) return nullptr;
+    pointer_placeholder.push_back(method_count); // TODO back() can be available only if the vector isn't empty.
     uint32_t* tmp = &pointer_placeholder.back();
     for (uint32_t i = 0; i < method_count; i++) {
         pointer_placeholder.push_back((uint32_t) read_function());
@@ -130,6 +127,7 @@ function* Converter::read_methods(uint32_t method_count) {
 function* Converter::read_constructors() {
     uint32_t constructor_count = *read_int();
     DEBUG_OUT_HEX("constructor count : ", constructor_count);
+    pointer_placeholder.push_back(constructor_count);
     if (constructor_count == 0) return nullptr;
     uint32_t* tmp = &pointer_placeholder.back();
     for (uint32_t i = 0; i < constructor_count; i++) {
@@ -140,6 +138,7 @@ function* Converter::read_constructors() {
 immediate* Converter::read_immediate() {
     uint32_t size = *read_int();
     DEBUG_OUT_HEX("immediate size : ", size);
+    value_placeholder.push_back(size); // TODO back() can be available only if the vector isn't empty.
     uint32_t* tmp = &value_placeholder.back();
     for (uint32_t i = 0; i < size; i++) {
         value_placeholder.push_back(*read_int());
@@ -149,6 +148,7 @@ immediate* Converter::read_immediate() {
 immediate* Converter::read_constant_pool() {
     uint32_t constant_pool_count = *read_int();
     DEBUG_OUT_HEX("constant pool count : ", constant_pool_count);
+    pointer_placeholder.push_back(constant_pool_count); // TODO back() can be available only if the vector isn't empty.
     if (constant_pool_count == 0) return nullptr;
     uint32_t* tmp = &pointer_placeholder.back();
     for (uint32_t i = 0; i < constant_pool_count; i++) {
