@@ -1,5 +1,6 @@
 #include "rcwt.h"
 #include "VirtualMachine.h"
+#include <chrono>
 
 //#ifdef __GNUC__
 //immediate sub(immediate a) {
@@ -15,6 +16,9 @@ uint32_t ti;
 #define write_str(s) fout << s << '\0'
 
 int main() {
+    auto start = chrono::system_clock::now();
+
+    // test
     auto vm = new VirtualMachine;
     ofstream fout("test.wc", ios::in | ios::binary);
     write_int(0xdeadbeefu); // magic
@@ -42,6 +46,10 @@ int main() {
     fout.flush();
     auto tmp = vm->converter->WCtoMemory("test");
     vm->execute(tmp);
+
+    auto end = chrono::system_clock::now();
+    double elapsed = chrono::duration_cast<chrono::milliseconds>(end-start).count();
+    printf("time %lf[ms]\n", elapsed);
 }
 
 #undef write_int

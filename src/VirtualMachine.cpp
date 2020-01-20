@@ -11,33 +11,39 @@ uint32_t VirtualMachine::pop() {
 	return tmp;
 }
 void VirtualMachine::execute(class_* entry) {
+    auto test = vector<uint32_t>(64);
+    test.push_back(0x20202020);
+    test.push_back(0x21212121);
+    test.push_back(0x22222222);
+    test.push_back(0x00000001);
 // direct threading
 #define INIT_DISPATCH JUMP;
 #define CASE(op) L_ ## op:
 #define NEXT i=*++pc; goto *table[i.type]
 #define JUMP i=*pc; goto *table[i.type]
 #define END_DISPATCH L_END:
-    auto* pc = (instruction*) &entry->methods[entry->entry_point];
-    instruction i = *new instruction;
+    auto pc = (instruction*) &test[0];
+    auto i = *new instruction;
+    int j = 0;
     static void* table[] = {
-        /* 00 */ &&L_NOP,   /* 01 */ &&L_EXIT,  /* 02 */ &&L_DEBUG,  /* 03 */ &&L_NOP,
-        /* 04 */ &&L_NOP,   /* 05 */ &&L_NOP,   /* 06 */ &&L_NOP,    /* 07 */ &&L_NOP,
-        /* 08 */ &&L_NOP,   /* 09 */ &&L_NOP,   /* 0a */ &&L_NOP,    /* 0b */ &&L_NOP,
-        /* 0c */ &&L_NOP,   /* 0d */ &&L_NOP,   /* 0e */ &&L_NOP,    /* 0f */ &&L_NOP,
+        /* 00 */ &&L_NOP,      /* 01 */ &&L_EXIT,     /* 02 */ &&L_DEBUG,  /* 03 */ &&L_NOP,
+        /* 04 */ &&L_NOP,      /* 05 */ &&L_NOP,      /* 06 */ &&L_NOP,    /* 07 */ &&L_NOP,
+        /* 08 */ &&L_NOP,      /* 09 */ &&L_NOP,      /* 0a */ &&L_NOP,    /* 0b */ &&L_NOP,
+        /* 0c */ &&L_NOP,      /* 0d */ &&L_NOP,      /* 0e */ &&L_NOP,    /* 0f */ &&L_NOP,
 
-        /* 10 */ &&L_COPY,  /* 11 */ &&L_SWAP,  /* 12 */ &&L_CALL,   /* 13 */ &&L_RET,
-        /* 14 */ &&L_PUSH,  /* 15 */ &&L_POP,   /* 16 */ &&L_SET,    /* 17 */ &&L_GET,
-        /* 18 */ &&L_STORE, /* 19 */ &&L_LOAD,  /* 1a */ &&L_GOTO,   /* 1b */ &&L_NEW,
-        /* 1c */ &&L_NOP,   /* 1d */ &&L_NOP,   /* 1e */ &&L_NOP,    /* 1f */ &&L_NOP,
+        /* 10 */ &&L_COPY,     /* 11 */ &&L_SWAP,     /* 12 */ &&L_CALL,   /* 13 */ &&L_RET,
+        /* 14 */ &&L_PUSH,     /* 15 */ &&L_POP,      /* 16 */ &&L_SET,    /* 17 */ &&L_GET,
+        /* 18 */ &&L_STORE,    /* 19 */ &&L_LOAD,     /* 1a */ &&L_GOTO,   /* 1b */ &&L_NEW,
+        /* 1c */ &&L_PROLOGUE, /* 1d */ &&L_EPILOGUE, /* 1e */ &&L_NOP,    /* 1f */ &&L_NOP,
 
-        /* 20 */ &&L_ADD,   /* 21 */ &&L_SUB,   /* 22 */ &&L_MUL,    /* 23 */ &&L_DIV,
-	    /* 24 */ &&L_GT,    /* 25 */ &&L_GE,    /* 26 */ &&L_LT,     /* 27 */ &&L_LE,
-        /* 28 */ &&L_EQ,    /* 29 */ &&L_AND,   /* 2a */ &&L_OR,     /* 2b */ &&L_NOT,
-        /* 2c */ &&L_CONST, /* 2d */ &&L_NOP,   /* 2e */ &&L_NOP,    /* 2f */ &&L_NOP,
+        /* 20 */ &&L_ADD,      /* 21 */ &&L_SUB,      /* 22 */ &&L_MUL,    /* 23 */ &&L_DIV,
+	    /* 24 */ &&L_GT,       /* 25 */ &&L_GE,       /* 26 */ &&L_LT,     /* 27 */ &&L_LE,
+        /* 28 */ &&L_EQ,       /* 29 */ &&L_AND,      /* 2a */ &&L_OR,     /* 2b */ &&L_NOT,
+        /* 2c */ &&L_CONST,    /* 2d */ &&L_NOP,      /* 2e */ &&L_NOP,    /* 2f */ &&L_NOP,
     };
 	INIT_DISPATCH {
         CASE(NOP) {
-		} NEXT;
+        } NEXT;
 		CASE(EXIT) {
 			goto L_END;
 		} NEXT;
@@ -97,6 +103,16 @@ void VirtualMachine::execute(class_* entry) {
             while (free_pointer + i.operand1 > limit_pointer) garbage_collect();
             free_pointer += i.operand1;
             registers[i.operand0] = (uint32_t) tmp;
+        } NEXT;
+        CASE(PROLOGUE) {
+            push((uint32_t) base_pointer);
+            base_pointer = stack_pointer;
+            for (uint32_t u = 0; u < i.operand0; u++) push(0u);
+        } NEXT;
+        CASE(EPILOGUE) {
+            pc = (instruction*) pop();
+            stack_pointer = base_pointer;
+            base_pointer = (uint32_t*) pop();
         } NEXT;
 
 		CASE(ADD) {

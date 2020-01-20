@@ -9,7 +9,7 @@ class VirtualMachine {
 public:
 	VirtualMachine() {
         this->call_stack.clear();
-        this->registers.clear();
+        this->registers = vector<uint32_t>(64);
         this->functions.clear();
         this->stack_pointer = &call_stack.front();
         this->base_pointer = nullptr;
